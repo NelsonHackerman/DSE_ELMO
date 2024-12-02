@@ -16,5 +16,5 @@ F_ty=448*10**6#N/m2 yield tensile strength
 #overall axial >25Hz, lat >10Hz
 f_ax=25
 f_lat=10
-l=np.sqrt(E/rho)*0.25/f_ax
+l=np.sqrt(E/rho)*0.25/f_ax #equation for axial natural frequency
 print('Required length for natural frequency monocoque : ',l)
