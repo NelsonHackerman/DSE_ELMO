@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, Eq, solve, nsolve
 import sympy
+from Constants.py import E,v,rho,Sig_tu,Sig_ty,g,SF,m,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
 GREEN = "\033[92m"
 RED = "\033[91m"
 RESET = "\033[0m"

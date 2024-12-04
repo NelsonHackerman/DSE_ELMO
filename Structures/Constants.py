@@ -14,8 +14,8 @@ SF=1.6 #table 11-54 SMAD
 #overall axial >25Hz, lat >10Hz
 
 m=6519.77 #(new estimate)
-l=7 #length of s/c
-d=2 #diameter
+l=4 #length of s/c
+d=2.5 #diameter
 r=d/2 #radius
 l_ax_com=6*g*SF*m #axial load for compression
 l_ax_ten=2.5*g*SF*m #axial load for tension
