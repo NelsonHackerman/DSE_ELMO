@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, Eq, solve, nsolve
 import sympy
-global E,v,rho,Sig_tu,Sig_ty,g,SF,m,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
-from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,m,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
+global E,v,rho,Sig_tu,Sig_ty,g,SF,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
+from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
 
 GREEN = "\033[92m"
 RED = "\033[91m"
@@ -11,8 +11,6 @@ PURPLE = "\033[95m"
 RESET = "\033[0m"
 #Kickstage option, I'm running the program twice, first for the top half with the orbiter, then for the actual kickstage.
 
-mtot=4317+2665
-m=2665
 
 
 
@@ -30,13 +28,16 @@ def Shell(m,l,d,t,n):
     print('Estimated thickness lat vibration(only skin): ',t2*1000,' mm')
 
     #Sizing for tensile strength with bending moment included
-    t3=l_eq_ten*SF/(np.pi*d*Sig_ty)
+    t3=l_eq_ten*m/(np.pi*d*Sig_ty)
     print('Estimated thickness tension mode: ',t3*1000,' mm')
 
     #Using t from the input, as buckling is the most critical and has to be done manually as k has to be read off a graph
     #Sizing for compressive buckling strength with bending moment included
     A=np.pi*d*t
-    Req_buck=l_eq_com/A 
+    realA=np.pi*((r+t/2)**2-(r-t/2)**2) #checking accuraacy of thin wall assump
+    Req_buck=l_eq_com*m/A 
+    realReq_buck=l_eq_com*m/realA
+    buckratio=(realReq_buck-Req_buck)/Req_buck*100 #thin wall assump check
     #n=200 #number of stringers
     b=np.pi*d/n #distance between stringers
     ts=0.001 #thickness of 1 stringer
@@ -75,9 +76,12 @@ def Shell(m,l,d,t,n):
     print('Axial natural frequency: ',f_ax_mod,'Hz')
     print('Lateral natural frequency: ',f_lat_mod,'Hz')
     print('Total volume',v_struc,'m3')
+    print('Percentage difference assumptions',(realA-A)/A*100)
+    print('Check assumptions',r/t,l/r)
+    print('Assumption ratio',buckratio)
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(m,3,d,0.001,190) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,3,d,0.001,185) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,3,d,0.001,128) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,3,d,0.001,228) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")

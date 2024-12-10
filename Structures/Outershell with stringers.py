@@ -8,6 +8,7 @@ RED = "\033[91m"
 RESET = "\033[0m"
 
 #OPTION 2: shell with longitudinal stiffeners
+#USE OPTION B OR D ON CONSTANTS FILE
 
 
 
@@ -27,7 +28,7 @@ print('Estimated thickness lat vibration(only skin): ',t2*1000,' mm')
 
 
 #Sizing for tensile strength with bending moment included
-t3=l_eq_ten*SF/(np.pi*d*Sig_ty)
+t3=l_eq_ten*m/(np.pi*d*Sig_ty)
 print('Estimated thickness tension mode: ',t3*1000,' mm')
 
 #thickness t1 is the most limiting right now so I will be using that
@@ -35,17 +36,17 @@ t=max(t1,t2,t3)
 
 
 #Sizing for compressive buckling strength with bending moment included
-t=0.001 #Manually changing the thickness here to meet buckling req
+t=0.0013 #Manually changing the thickness here to meet buckling req
 A=np.pi*d*t
 
-Req_buck=l_eq_com/A 
-n=200 #number of stringers
+Req_buck=l_eq_com*m/A 
+n=180 #number of stringers
 b=np.pi*d/n #distance between stringers
 ts=0.001 #thickness of 1 stringer
 ls=0.02 # total length of 1 stringer
 val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
 print(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}')
-k=4
+k=4.5
 Mod_buck=k*np.pi**2*E/(12*(1-v**2))*(t/b)**2
 print('Required buckling strength: ',Req_buck,' Pa')
 print('Model buckling strength: ',Mod_buck,' Pa')
@@ -76,3 +77,4 @@ f_ax_mod=0.25*np.sqrt(A*E/(m*l))
 print('Axial natural frequency: ',f_ax_mod,'Hz')
 print('Lateral natural frequency: ',f_lat_mod,'Hz')
 print('Total volume',np.pi*r**2*l,'m3')
+print(m)

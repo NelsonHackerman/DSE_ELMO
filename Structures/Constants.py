@@ -13,13 +13,24 @@ SF=1.6 #table 11-54 SMAD
 #arianes: axial >20Hz, lat >6Hz
 #overall axial >25Hz, lat >10Hz
 
-m=6519.77 #(new estimate)
-l=4 #length of s/c
+option='d'
+if option=='a':
+    morb=2778.26
+    mtot=8629.51
+if option=='b':
+    m=13012.01
+if option=='c':
+    morb=4618.22
+    mtot=13618.38
+if option=='d':
+    m=18762.26
+    
+l=4 #length of s/c config gave 3.349
 d=2.5 #diameter
-r=d/2 #radius
-l_ax_com=6*g*SF*m #axial load for compression
-l_ax_ten=2.5*g*SF*m #axial load for tension
-l_lat=2*g*SF*m #lateral load
+r=d/2 #radius config gave 0.71
+l_ax_com=6*g*SF #axial load for compression
+l_ax_ten=2.5*g*SF #axial load for tension
+l_lat=2*g*SF #lateral load
 m_bend=l/2*l_lat #axial bending moment from lateral loads
 l_eq_ten=l_ax_ten+2*m_bend/r #axial tension load with bending
 l_eq_com=l_ax_com+2*m_bend/r #axial compressive load with bending
