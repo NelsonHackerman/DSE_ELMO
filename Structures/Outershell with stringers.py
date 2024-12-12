@@ -40,13 +40,13 @@ t=0.0013 #Manually changing the thickness here to meet buckling req
 A=np.pi*d*t
 
 Req_buck=l_eq_com*m/A 
-n=180 #number of stringers
+n=224 #number of stringers
 b=np.pi*d/n #distance between stringers
 ts=0.001 #thickness of 1 stringer
 ls=0.02 # total length of 1 stringer
 val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
 print(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}')
-k=4.5
+k=4
 Mod_buck=k*np.pi**2*E/(12*(1-v**2))*(t/b)**2
 print('Required buckling strength: ',Req_buck,' Pa')
 print('Model buckling strength: ',Mod_buck,' Pa')
@@ -70,6 +70,8 @@ for i in range (1,int(n/4)):
     lm.extend([d,d,d,d]) #this becomes a list of distances of each stringer from the center axis
 I_str=np.sum(np.square(lm)*ls*ts) #Stringer MOI, Only parallel axis, inherent MOI ignored
 I_total=I_str+I_skin
+
+III_str=1/12*(ts**3*ls/2)+1/12*(ts*(ls/2)**3)*n
 print('Total MOI: ',I_total,'m4')
 print('Required MOI ',I_req,'m4')
 f_lat_mod=0.56*np.sqrt(E*I_total/(m*l**3))
@@ -78,3 +80,4 @@ print('Axial natural frequency: ',f_ax_mod,'Hz')
 print('Lateral natural frequency: ',f_lat_mod,'Hz')
 print('Total volume',np.pi*r**2*l,'m3')
 print(m)
+print('Fraction of MOI: ',III_str/I_total)

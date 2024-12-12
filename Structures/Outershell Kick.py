@@ -80,8 +80,8 @@ def Shell(m,l,d,t,n):
     print('Check assumptions',r/t,l/r)
     print('Assumption ratio',buckratio)
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(morb,3,d,0.001,128) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,3,d,0.001,228) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,3,d,0.001,176) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,3,d,0.001,300) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")

@@ -34,24 +34,25 @@ print('Estimated thickness lat vibration: ',t2*1000,' mm')
 
 
 #Sizing for tensile strength 
-t3=l_eq_ten*SF/(np.pi*d*Sig_ty)
+t3=l_eq_ten*m/(np.pi*d*Sig_ty)
 print('Estimated thickness tension mode: ',t3*1000,' mm')
 
 #thickness t1 is the most limiting right now so I will be using that
 t=max(t1,t2,t3)
-t=0.00355
+t=0.00555
 
 #Sizing for compressive strength
 
 
 A=np.pi*d*t
 
-Req_buck=l_eq_com/A #Minimum required buckling strength
+Req_buck=l_eq_com*m/A #Minimum required buckling strength
 # phi=1/16*np.sqrt(r/t)
 # gamma=1-0.901*(1-np.exp(-phi))
 Mod_buck=.6*E*t/r*(1-0.901*(1-np.exp(-1/16*np.sqrt(r/t))))
 print('Required buckling strength: ',Req_buck,' Pa')
 print('Model buckling strength: ',Mod_buck,' Pa')
+print('Buckling ratio: ',Mod_buck/Req_buck)
 if Mod_buck>Req_buck:
     print(f"{GREEN}Model can withstand buckling{RESET}")
 else:

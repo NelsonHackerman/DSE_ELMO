@@ -5,7 +5,7 @@ rho=2.8*10**3#kg/m3
 Sig_tu=524*10**6#N/m2 ultimate tensile strength
 Sig_ty=448*10**6#N/m2 yield tensile strength
 g=9.81
-SF=1.6 #table 11-54 SMAD
+SF=1.1 #table 11-54 SMAD
 #falcon 9: axial -2 to 6g, long -2 to 2g + for compress
 #arianes: axial -6 to 2.5g, long -1.8 to 1.8g - for compress
 #overall axial -6 to 2.5g, long -2 to 2g (I'M USING + FOR TENSION)
