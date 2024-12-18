@@ -1,9 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
+
 from sympy import symbols, Eq, solve, nsolve
 import sympy
-global E,v,rho,Sig_tu,Sig_ty,g,SF,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
-from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
+global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat
+from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du
 
 GREEN = "\033[92m"
 RED = "\033[91m"
@@ -14,7 +14,7 @@ RESET = "\033[0m"
 
 
 
-def Shell(m,l,d,t,n):
+def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     #sizing for axial natural frequency
     A=f_ax**2*m*l/(E*0.25**2) #Calculating minimum area
     t1=A/(np.pi*d) #Calculating minimum thickness from area
@@ -71,7 +71,7 @@ def Shell(m,l,d,t,n):
     print('Total MOI: ',I_total,'m4')
     print('Required MOI ',I_req,'m4')
     f_lat_mod=0.56*np.sqrt(E*I_total/(m*l**3))
-    f_ax_mod=0.25*np.sqrt(A*E/(m*l))
+    f_ax_mod=0.25*np.sqrt((A+ls*ts*n)*E/(m*l))
     v_struc=np.pi*r**2*l
     print('Axial natural frequency: ',f_ax_mod,'Hz')
     print('Lateral natural frequency: ',f_lat_mod,'Hz')
@@ -80,9 +80,17 @@ def Shell(m,l,d,t,n):
     print('Check assumptions',r/t,l/r)
     print('Assumption ratio',buckratio)
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(morb,3,d,0.001,176) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,3,d,0.001,300) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,132,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,244,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
+print(f"{PURPLE}Total LOAD BEARING mass: {total_struc_mass} kg{RESET}")
+total_struc_mass=1/0.6347*total_struc_mass #1.1 for fasteners
+
+
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")
 print(f"{PURPLE}Total outer volume: {total_struc_vol} m^3{RESET}")
+m_u_stage=1/0.6347*m_u_stage
+m_l_stage=1/0.6347*m_l_stage
+print ('upper stage mass ', m_u_stage)
+print('lower stage mass ',m_l_stage)

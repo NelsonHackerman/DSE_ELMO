@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+
 from sympy import symbols, Eq, solve, nsolve
 import sympy
 from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,m,l,d,r,l_ax_com,l_ax_ten,l_lat,m_bend,l_eq_ten,l_eq_com,f_ax,f_lat
@@ -34,15 +34,15 @@ print('Estimated thickness tension mode: ',t3*1000,' mm')
 #thickness t1 is the most limiting right now so I will be using that
 t=max(t1,t2,t3)
 
-
+t=0.012
 #Sizing for compressive buckling strength with bending moment included
-t=0.0013 #Manually changing the thickness here to meet buckling req
+#t=0.001 #Manually changing the thickness here to meet buckling req
 A=np.pi*d*t
 
 Req_buck=l_eq_com*m/A 
-n=224 #number of stringers
+n=220 #number of stringers
 b=np.pi*d/n #distance between stringers
-ts=0.001 #thickness of 1 stringer
+ts=0.008 #thickness of 1 stringer
 ls=0.02 # total length of 1 stringer
 val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
 print(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}')
@@ -59,6 +59,8 @@ else:
 
 struc_m=t*d*np.pi*l*rho + ts*ls*l*n*rho #Calculating the total structural mass
 print('Mass of load bearing structure: ',struc_m,' kg')
+struc_m=1/0.6347*struc_m
+print('Mass of TOTAL structure: ',struc_m,' kg')
 
 #Stringer and skin total MOI calculation
 I_skin=np.pi*r**3*t #Skin MOI
@@ -75,7 +77,7 @@ III_str=1/12*(ts**3*ls/2)+1/12*(ts*(ls/2)**3)*n
 print('Total MOI: ',I_total,'m4')
 print('Required MOI ',I_req,'m4')
 f_lat_mod=0.56*np.sqrt(E*I_total/(m*l**3))
-f_ax_mod=0.25*np.sqrt(A*E/(m*l))
+f_ax_mod=0.25*np.sqrt((A+ts*ls*n)*E/(m*l))
 print('Axial natural frequency: ',f_ax_mod,'Hz')
 print('Lateral natural frequency: ',f_lat_mod,'Hz')
 print('Total volume',np.pi*r**2*l,'m3')
