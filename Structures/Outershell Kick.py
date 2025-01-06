@@ -30,7 +30,6 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     #Sizing for tensile strength with bending moment included
     t3=l_eq_ten*m/(np.pi*d*Sig_ty)
     print('Estimated thickness tension mode: ',t3*1000,' mm')
-
     #Using t from the input, as buckling is the most critical and has to be done manually as k has to be read off a graph
     #Sizing for compressive buckling strength with bending moment included
     A=np.pi*d*t
@@ -57,6 +56,8 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
 
     struc_m=t*d*np.pi*l*rho + ts*ls*l*n*rho #Calculating the total structural mass
     print(f"{PURPLE}Mass of load-bearing structure: {struc_m} kg{RESET}")
+    m_shell=t*d*np.pi*l*rho
+    print('Mass of shell ONLY: ',m_shell)
 
     #Stringer and skin total MOI calculation
     I_skin=np.pi*r**3*t #Skin MOI
@@ -90,7 +91,7 @@ total_struc_mass=1/0.6347*total_struc_mass #1.1 for fasteners
 
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")
 print(f"{PURPLE}Total outer volume: {total_struc_vol} m^3{RESET}")
-m_u_stage=1/0.6347*m_u_stage
-m_l_stage=1/0.6347*m_l_stage
+m_u_stage=1/0.6347*m_u_stage-m_u_stage
+m_l_stage=1/0.6347*m_l_stage-m_l_stage
 print ('upper stage mass ', m_u_stage)
 print('lower stage mass ',m_l_stage)

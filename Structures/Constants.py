@@ -4,6 +4,13 @@ v=0.33
 rho=2.8*10**3#kg/m3
 Sig_tu=524*10**6#N/m2 ultimate tensile strength
 Sig_ty=448*10**6#N/m2 yield tensile strength
+print(Sig_tu/1.25)
+print(Sig_ty/1.1)#Yeild stress is limiting here
+# E=1.150*10**9#N/m2
+# v=0.3
+# rho=130#kg/m3
+# Sig_tu=9.9*10**6#N/m2 ultimate tensile strength
+# Sig_ty=9.9*10**6
 # E=193*10**9#N/m2
 # v=0.3
 # rho=8*10**3#kg/m3
@@ -24,7 +31,7 @@ l_lat=2*g*SF #lateral load
 f_ax=25 #axial natural frequency requirement
 f_lat=10 #longitudinal natural frequency requirement
 
-option='d'
+option='c'
 if option=='a':
     morb=4364
     mtot=10761
@@ -49,14 +56,14 @@ if option=='b':
     l_eq_ten=l_ax_ten+2*m_bend/r #axial tension load with bending
     l_eq_com=l_ax_com+2*m_bend/r
 if option=='c':
-    morb=5592
-    mtot=17202
+    morb=5684
+    mtot=17653
     ru=0.75
-    rl=1.04
+    rl=1.00
     du=2*ru
     dl=2*rl
     lu=3.44
-    ll=2.80
+    ll=2.4
     m_bend_u=lu/2*l_lat #axial bending moment from lateral loads
     l_eq_ten_u=l_ax_ten+2*m_bend_u/ru #axial tension load with bending
     l_eq_com_u=l_ax_com+2*m_bend_u/ru
