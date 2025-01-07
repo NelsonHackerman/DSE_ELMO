@@ -4,8 +4,8 @@ v=0.33
 rho=2.8*10**3#kg/m3
 Sig_tu=524*10**6#N/m2 ultimate tensile strength
 Sig_ty=448*10**6#N/m2 yield tensile strength
-print(Sig_tu/1.25)
-print(Sig_ty/1.1)#Yeild stress is limiting here
+#print(Sig_tu/1.25)
+#print(Sig_ty/1.1)#Yeild stress is limiting here
 # E=1.150*10**9#N/m2
 # v=0.3
 # rho=130#kg/m3
