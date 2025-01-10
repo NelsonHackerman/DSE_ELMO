@@ -1,9 +1,15 @@
 #material: AL 7075
-E=71*10**9#N/m2
-v=0.33
-rho=2.8*10**3#kg/m3
-Sig_tu=524*10**6#N/m2 ultimate tensile strength
-Sig_ty=448*10**6#N/m2 yield tensile strength
+# E=71*10**9#N/m2
+# v=0.33
+# rho=2.8*10**3#kg/m3
+# Sig_tu=524*10**6#N/m2 ultimate tensile strength
+# Sig_ty=448*10**6#N/m2 yield tensile strength
+E=140*10**9#N/m2
+v=0.32
+rho=1.636*10**3#kg/m3
+Sig_tu=1820*10**6#N/m2 ultimate tensile strength
+Sig_c=1470*10**6#N/m2 compressive strength
+Sig_ty=1820*10**6#N/m2 yield tensile strength
 #print(Sig_tu/1.25)
 #print(Sig_ty/1.1)#Yeild stress is limiting here
 # E=1.150*10**9#N/m2
@@ -17,7 +23,7 @@ Sig_ty=448*10**6#N/m2 yield tensile strength
 # Sig_tu=515*10**6#N/m2 ultimate tensile strength
 # Sig_ty=205*10**6
 g=9.81
-SF=1.1 #table 11-54 SMAD
+SF=1.25 #table 11-54 SMAD
 #falcon 9: axial -2 to 6g, long -2 to 2g + for compress
 #arianes: axial -6 to 2.5g, long -1.8 to 1.8g - for compress
 #overall axial -6 to 2.5g, long -2 to 2g (I'M USING + FOR TENSION)
@@ -56,20 +62,20 @@ if option=='b':
     l_eq_ten=l_ax_ten+2*m_bend/r #axial tension load with bending
     l_eq_com=l_ax_com+2*m_bend/r
 if option=='c':
-    morb=5684
-    mtot=17653
-    ru=0.75
-    rl=1.00
+    morb=5040.11
+    mtot=9602.85+morb
+    ru=1.61/2
+    rl=2.01/2
     du=2*ru
     dl=2*rl
-    lu=3.44
-    ll=2.4
+    lu=3.74
+    ll=4.04
     m_bend_u=lu/2*l_lat #axial bending moment from lateral loads
     l_eq_ten_u=l_ax_ten+2*m_bend_u/ru #axial tension load with bending
     l_eq_com_u=l_ax_com+2*m_bend_u/ru
     m_bend_l=(lu+ll)/2*l_lat#axial bending moment from lateral loads
-    l_eq_ten_l=l_ax_ten+2*m_bend_u/rl #axial tension load with bending
-    l_eq_com_l=l_ax_com+2*m_bend_u/rl
+    l_eq_ten_l=l_ax_ten+2*m_bend_l/rl #axial tension load with bending
+    l_eq_com_l=l_ax_com+2*m_bend_l/rl
 if option=='d':
     m=31047 
     r=1.04

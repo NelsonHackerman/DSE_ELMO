@@ -2,8 +2,8 @@ import numpy as np
 
 from sympy import symbols, Eq, solve, nsolve
 import sympy
-global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat
-from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du
+global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
+from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
 
 GREEN = "\033[92m"
 RED = "\033[91m"
@@ -37,10 +37,15 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     Req_buck=l_eq_com*m/A 
     realReq_buck=l_eq_com*m/realA
     buckratio=(realReq_buck-Req_buck)/Req_buck*100 #thin wall assump check
-    #n=200 #number of stringers
+    
     b=np.pi*d/n #distance between stringers
     ts=0.001 #thickness of 1 stringer
-    ls=0.02 # total length of 1 stringer
+    ls=0.03 # total length of 1 stringer
+    A2=np.pi*d*t+ls*ts
+    if l_eq_com*m/A2>Sig_c:
+        print(f"{RED}Compression{RESET}")
+    else:
+        print(f"{GREEN}No compression{RESET}")
     val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
     k=input(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}: k=')
     k=float(k)
@@ -81,8 +86,8 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     print('Check assumptions',r/t,l/r)
     print('Assumption ratio',buckratio)
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,132,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,244,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,100,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,176,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
 print(f"{PURPLE}Total LOAD BEARING mass: {total_struc_mass} kg{RESET}")
@@ -91,6 +96,8 @@ total_struc_mass=1/0.6347*total_struc_mass #1.1 for fasteners
 
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")
 print(f"{PURPLE}Total outer volume: {total_struc_vol} m^3{RESET}")
+print(m_u_stage)
+print(m_l_stage)
 m_u_stage=1/0.6347*m_u_stage-m_u_stage
 m_l_stage=1/0.6347*m_l_stage-m_l_stage
 print ('upper stage mass ', m_u_stage)
