@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 from scipy.linalg import eigh
-from Truss_force_and_stiffness import apply_force, apply_boundary_conditions, calculate_stiffness_matrix, calculate_element_forces, visualize_truss, check_stress, calculate_mass, calculate_mass_matrix, solve_eigenvalue_problem, calculate_natural_frequencies, visualize_mode_shape,calculate_mass_matrix_calfem,calculate_stiffness_matrix_calfem,calculate_natural_frequencies2,solve_eigenvalue_problem2,apply_boundary_conditions2,expand_displacement_vector
+from numpy.linalg import solve
+from Truss_force_and_stiffness import apply_force, apply_boundary_conditions, calculate_stiffness_matrix, calculate_element_forces, visualize_truss, check_stress, calculate_mass, calculate_mass_matrix, solve_eigenvalue_problem, calculate_natural_frequencies, visualize_mode_shape,calculate_mass_matrix_calfem,calculate_stiffness_matrix_calfem,solve_eigenvalue_problem2,apply_boundary_conditions2,expand_displacement_vector
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
 from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
 
@@ -35,6 +36,7 @@ class TrussStructure:
         self.t=[]
         self.r=[]
         self.A=[]
+        self.Avert=[]
         # #vertical connections between nodes in the same column
         for column in self.columns:
             for i in range(len(column)-1):
@@ -46,10 +48,12 @@ class TrussStructure:
                 self.r.append(r)
                 self.A.append(A)
                 self.elements.append(element)
+                if i==0:
+                    self.Avert.append(A)
 
         #horizonal connections between nodes on the same vertical level
         for i in range(len(self.columns)):
-            for j in range(len(self.columns[0])):
+            for j in range(1,len(self.columns[0])):
                 element = [self.columns[i][j], self.columns[(i+1) % (len(self.columns))][j]]
                 self.elements.append(element)
                 if j==0:
@@ -65,26 +69,64 @@ class TrussStructure:
                 
         
         # #diagonal connections
+        intersection_nodes = []
         for i in range(len(self.columns)):
             for j in range(len(self.columns[0])-1):
-                element = [self.columns[i][j], self.columns[(i+1) % len(self.columns)][j+1]]
-                self.elements.append(element)
+                # Calculate intersection point of diagonals
+                point1 = self.columns[i][j]
+                point2 = self.columns[(i+1) % len(self.columns)][j+1]
+                point3 = self.columns[i][j]
+                point4 = self.columns[(i-1) % len(self.columns)][j+1]
+                
+                # Calculate midpoint of both diagonals (they intersect at the same point)
+                mid_x = (point1[0] + point2[0]) / 2
+                mid_y = (point1[1] + point2[1]) / 2
+                mid_z = (point1[2] + point2[2]) / 2
+                
+                intersection_nodes.append([mid_x, mid_y, mid_z])
+
+        # Add intersection nodes to main node list
+        self.nodes.extend(intersection_nodes)
+        print('nodes ',len(self.nodes))
+        intersection_idx = 0
+        for i in range(len(self.columns)):
+            for j in range(len(self.columns[0])-1):
+                start = self.columns[i][j]
+                end = self.columns[(i+1) % len(self.columns)][j+1]
+                mid_point = [(start[0] + end[0])/2, (start[1] + end[1])/2, (start[2] + end[2])/2]
+                
+
+                # Replace one diagonal with two elements meeting at midpoint
+                self.elements.append([start, mid_point])
+                self.elements.append([mid_point, end])
                 t=dt
                 r=dr
                 A=np.pi*(r**2-(r-t)**2)
                 self.t.append(t)
+                self.t.append(t)
                 self.r.append(r)
+                self.r.append(r)
+                self.A.append(A)
                 self.A.append(A)
         
         for i in range(len(self.columns)):
             for j in range(len(self.columns[0])-1):
-                element = [self.columns[i][j], self.columns[(i-1) % len(self.columns)][j+1]]
-                self.elements.append(element)
+                start = self.columns[i][j]
+                end = self.columns[(i-1) % len(self.columns)][j+1]
+                mid_point = [(start[0] + end[0])/2, (start[1] + end[1])/2, (start[2] + end[2])/2]
+                
+
+                # Replace one diagonal with two elements meeting at midpoint
+                self.elements.append([start, mid_point])
+                self.elements.append([mid_point, end])
                 t=dt
                 r=dr
                 A=np.pi*(r**2-(r-t)**2)
                 self.t.append(t)
+                self.t.append(t)
                 self.r.append(r)
+                self.r.append(r)
+                self.A.append(A)
                 self.A.append(A)
         
         self.length=[]
@@ -96,7 +138,7 @@ class TrussStructure:
 
 
 truss = TrussStructure()
-truss.DefineGeometry(8, ru, lu, 1,0.002,0.02,0.002,0.02,0.002,0.04,0.002,0.02)
+truss.DefineGeometry(4, ru, lu, 0,0.002,0.04,0.001,0.01,0.001,0.03,0.001,0.04)
 
 
 for element in truss.elements:
@@ -106,31 +148,12 @@ for element in truss.elements:
 
 
 # --- External Force ---
-force_vector = [0, 0, -l_eq_com_u*morb]  # Example: 10 kN force in the negative z-direction
+
+force_vector = [0, 0, -l_eq_com_u*morb] #-2812*9.81*(7.1+5.1*2.5)] 
+force_vector2=[0, 0, -l_eq_ten_u*morb]
 print('force vector: ',force_vector)
-top_node_indices = [truss.node_index[tuple(np.float64(x) for x in column[-1])] for column in truss.columns] # Apply at top nodes
-F = apply_force(truss, force_vector, top_node_indices)
-K = calculate_stiffness_matrix_calfem(truss, E)
-K_reduced, F_reduced, free_dofs = apply_boundary_conditions2(truss, K, F)
-
-# Solve and calculate forces with the new implementation
-u_reduced = np.linalg.solve(K_reduced, F_reduced)
-total_dofs = 3 * len(truss.nodes)
-u_full = expand_displacement_vector(u_reduced, free_dofs, total_dofs)
-element_forces, element_stresses = calculate_element_forces(truss, E, u_full)
-
-
-
-
-
-
-# For eigenvalue analysis:
-eigenvalues, eigenvectors, free_dofs = solve_eigenvalue_problem(truss, E, morb)
-
-# --- Solve for Displacements ---
-
 # --- Calculate Element Forces ---
-element_forces, element_stresses = calculate_element_forces(truss,E, u_full)
+element_forces, element_stresses = calculate_element_forces(truss,force_vector)
 for i, force in enumerate(element_forces):
     print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
 stress_check=check_stress(element_stresses,truss)
@@ -139,17 +162,15 @@ stress_check=check_stress(element_stresses,truss)
 visualize_truss(truss,stress_check,element_forces)
 mass=calculate_mass(truss)
 print('Mass: ',mass)
-
-
 M=calculate_mass_matrix(truss, morb)
-eigenvalues,eigenvectors,free_dofs=solve_eigenvalue_problem(truss, E, morb)
-frequencies=calculate_natural_frequencies(truss, E, morb)
+frequencies=calculate_natural_frequencies(truss, E, morb,lu)
 print('frequencies ',frequencies)
-
-visualize_mode_shape(truss, eigenvectors,free_dofs, scale_factor=50)
-#print(truss.nodes)
 totalmass=mass*1/0.6347
 print('total mass: ',totalmass)
+#element_forces, element_stresses = calculate_element_forces(truss,force_vector2)
+#for i, force in enumerate(element_forces):
+    #print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
+#stress_check=check_stress(element_stresses,truss)
 
 
 
@@ -158,7 +179,7 @@ print('total mass: ',totalmass)
 
 
 truss2 = TrussStructure()
-truss2.DefineGeometry(8, rl, ll, 1,0.001,0.02,0.001,0.01,0.001,0.02,0.001,0.02)
+truss2.DefineGeometry(8, rl, ll, 1,0.003,0.03,0.001,0.03,0.001,0.03,0.002,0.03)
 
 
 for element in truss2.elements:
@@ -168,28 +189,10 @@ for element in truss2.elements:
 
 
 # --- External Force ---
-force_vector = [0, 0, -l_eq_com_l*mtot]  # Example: 10 kN force in the negative z-direction
+force_vector = [0, 0, -l_eq_com_u*mtot]  
 print('force vector: ',force_vector)
-top_node_indices = [truss2.node_index[tuple(np.float64(x) for x in column[-1])] for column in truss2.columns] # Apply at top nodes
-F = apply_force(truss2, force_vector, top_node_indices)
-K = calculate_stiffness_matrix_calfem(truss2, E)
-K_reduced, F_reduced, free_dofs = apply_boundary_conditions2(truss2, K, F)
-
-# Solve and calculate forces with the new implementation
-u_reduced = np.linalg.solve(K_reduced, F_reduced)
-total_dofs = 3 * len(truss2.nodes)
-u_full = expand_displacement_vector(u_reduced, free_dofs, total_dofs)
-element_forces, element_stresses = calculate_element_forces(truss2, E, u_full)
-
-# For eigenvalue analysis:
-eigenvalues, eigenvectors, free_dofs = solve_eigenvalue_problem(truss2, E, mtot)
-
-# --- Solve for Displacements ---
-
-
-
 # --- Calculate Element Forces ---
-element_forces, element_stresses = calculate_element_forces(truss2,E, u_full)
+element_forces, element_stresses = calculate_element_forces(truss2,force_vector)
 for i, force in enumerate(element_forces):
     print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
 stress_check=check_stress(element_stresses,truss2)
@@ -198,15 +201,9 @@ stress_check=check_stress(element_stresses,truss2)
 visualize_truss(truss2,stress_check,element_forces)
 mass=calculate_mass(truss2)
 print('Mass: ',mass)
-
-
 M=calculate_mass_matrix(truss2, mtot)
-eigenvalues,eigenvectors,free_dofs=solve_eigenvalue_problem(truss2, E, mtot)
-frequencies=calculate_natural_frequencies(truss2, E, mtot)
+frequencies=calculate_natural_frequencies(truss2, E, mtot,ll)
 print('frequencies ',frequencies)
-
-visualize_mode_shape(truss2, eigenvectors,free_dofs, scale_factor=50)
-#print(truss.nodes)
 totalmass=mass*1/0.6347
 print('total mass: ',totalmass)
 

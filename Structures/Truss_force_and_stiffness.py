@@ -5,6 +5,7 @@ import calfem.core as cfc
 import calfem.utils as cfu
 import calfem.vis_mpl as cfv
 from scipy.linalg import eigh
+from numpy.linalg import solve
 #from Structures.Truss_structure import TrussStructure
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
 from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
@@ -100,55 +101,73 @@ def apply_boundary_conditions(truss, K, F):
 
     return K, F
 
-def calculate_element_forces(truss, E, u_full):
+
+def calculate_element_forces(truss, external_force):
     """
-    Calculates forces and stresses for each truss element with unit consistency.
+    Calculate forces in truss elements using static equilibrium method
     
-    Args:
-        truss: Truss object containing elements, nodes, areas, and node index.
-        E: Young's modulus (in consistent units, e.g., Pa).
-        u_full: Displacement vector (in meters).
-        
+    Parameters:
+    truss: TrussStructure object containing geometry and properties
+    external_force: [Fx, Fy, Fz] external force vector applied to each top node
+    
     Returns:
-        element_forces: List of forces (N) for each element.
-        element_stresses: List of stresses (Pa) for each element.
+    element_forces: Array of axial forces in each element
+    element_stresses: Array of axial stresses in each element
     """
-    element_forces = []
-    element_stresses = []
+    n_nodes = len(truss.nodes)
+    n_elements = len(truss.elements)
+    for i in range(len(external_force)):
+        external_force[i]=external_force[i]/len(truss.baseNodes)
     
-    for i, element in enumerate(truss.elements):
-        # Node indices and coordinates
-        node1, node2 = element
-        idx1, idx2 = truss.node_index[tuple(node1)], truss.node_index[tuple(node2)]
-        x1, y1, z1 = node1
-        x2, y2, z2 = node2
-        
-        # Element geometry
-        dx, dy, dz = x2 - x1, y2 - y1, z2 - z1
-        L = np.sqrt(dx**2 + dy**2 + dz**2)
-        if L <= 1e-6:
-            raise ValueError(f"Element {i} has near-zero length.")
-        
-        # Direction cosines
-        cx, cy, cz = dx / L, dy / L, dz / L
-        
-        # Nodal displacements
-        u1 = u_full[3 * idx1:3 * idx1 + 3]
-        u2 = u_full[3 * idx2:3 * idx2 + 3]
-        
-        # Axial displacement
-        delta = cx * (u2[0] - u1[0]) + cy * (u2[1] - u1[1]) + cz * (u2[2] - u1[2])
-        
-        # Element stiffness
-        stiffness = E * truss.A[i] / L
-        
-        # Force and stress
-        force = stiffness * delta  # N
-        stress = force / truss.A[i]  # Pa
-        
-        # Append results
-        element_forces.append(force)
-        element_stresses.append(stress)
+    
+    # Create coefficient matrix A and force vector b for Ax = b
+    # Each row represents equilibrium equation (3 per node: Fx, Fy, Fz)
+    # Each column represents one element force
+    A = np.zeros((3 * n_nodes, n_elements))
+    b = np.zeros(3 * n_nodes)
+    
+    # Fill coefficient matrix A
+    for i, node in enumerate(truss.nodes):
+        node_tuple = tuple(node)
+        # Find all elements connected to this node
+        for j, element in enumerate(truss.elements):
+            if list(node_tuple) == element[0] or list(node_tuple) == element[1]:
+                # Calculate direction cosines
+                node1 = element[0]
+                node2 = element[1]
+                dx = node2[0] - node1[0]
+                dy = node2[1] - node1[1]
+                dz = node2[2] - node1[2]
+                L = np.sqrt(dx**2 + dy**2 + dz**2)
+                
+                # Direction depends on whether the node is start or end of element
+                sign = -1 if list(node_tuple) == element[0] else 1
+                
+                # Add direction cosines to coefficient matrix
+                A[3*i][j] = sign * dx/L      # x-component
+                A[3*i+1][j] = sign * dy/L    # y-component
+                A[3*i+2][j] = sign * dz/L    # z-component
+    
+    # Fill force vector b with external forces
+    top_z = max(node[2] for node in truss.nodes)
+    for i, node in enumerate(truss.nodes):
+        if abs(node[2] - top_z) < 1e-10:  # Node is at top level
+            b[3*i:3*i+3] = external_force
+    
+    # Remove equations for support nodes (base nodes)
+    free_rows = []
+    for i, node in enumerate(truss.nodes):
+        if abs(node[2]) > 1e-10:  # Not a base node
+            free_rows.extend([3*i, 3*i+1, 3*i+2])
+    
+    A_red = A[free_rows, :]
+    b_red = b[free_rows]
+    
+    # Solve system of equations using least squares to handle potential redundancy
+    element_forces = np.linalg.lstsq(A_red, b_red, rcond=None)[0]
+    
+    # Calculate stresses
+    element_stresses = element_forces / np.array(truss.A)
     
     return element_forces, element_stresses
 
@@ -394,27 +413,98 @@ def solve_eigenvalue_problem(truss, E, spacecraft_mass, lumped_mass=False):
         
     return eigenvalues, eigenvectors, free_dofs
 
-def calculate_natural_frequencies(truss, E, spacecraft_mass, lumped_mass=False):
+def calculate_natural_frequencies(truss, E, spacecraft_mass,l):
+
     """
-    Calculates natural frequencies with proper conversion.
-    
+    Retrieves cross-sectional areas of horizontal elements at a given level.
+
     Args:
-        truss: The truss structure object
-        E: Young's modulus
-        spacecraft_mass: Mass of the spacecraft
-        lumped_mass: Whether to use lumped mass matrix
-        
+        truss: A TrussStructure object.
+        level: The level (ring index, starting from 0) to query.
+
     Returns:
-        frequencies: Natural frequencies in Hz
+        A list of cross-sectional areas (floats) for horizontal elements at that level.
     """
-    eigenvalues, eigenvectors, free_dofs = solve_eigenvalue_problem(
-        truss, E, spacecraft_mass, lumped_mass)
+    areas = []
+    frequencies=[]
+    rs=[]
+    num_columns = len(truss.columns)
+    num_nodes_per_level = len(truss.columns[0])
+
+    # Initialize areas and radii for vertical and diagonal beams
+    vertical_areas = []
+    vertical_radii = []
+    vertical_elements=[]
+    diagonal_areas = []
+    diagonal_radii = []
+    diagonal_elements=[]
+
+    # Iterate through the elements in the first level only
+    for i in range(num_columns):  # Iterate over columns
+        for j in range(1):  # First level only
+            # Get the current element
+            element = truss.elements[j]
+            node1, node2 = element
+
+            # Extract node coordinates
+            x1, y1, z1 = node1[0],node1[1],node1[2]
+            x2, y2, z2 = node2[0],node2[1],node2[2]
+
+            # Calculate the angle of the element with respect to the horizontal
+            dx = x2 - x1
+            dy = y2 - y1
+            dz = z2 - z1
+
+            angle = np.arctan2(np.sqrt(dy**2 + dz**2), dx)  # 3D angle (dx is horizontal reference)
+
+            # Check for vertical (90 degrees or π/2 radians)
+            if np.isclose(angle, np.pi / 2):
+                vertical_areas.append(truss.A[j])
+                vertical_radii.append(truss.r[j])
+                vertical_elements.append(truss.elements[j])
+
+            # Check for diagonal (not horizontal or vertical)
+            elif not np.isclose(angle, 0) and not np.isclose(angle, np.pi / 2):
+                diagonal_areas.append(truss.A[j]/np.cos(angle))
+                diagonal_radii.append(truss.r[j])
+                diagonal_elements.append(truss.elements[j])
+
+    # Output cross-sectional areas
+    vertical_area_total = np.sum(vertical_areas)
+    diagonal_area_total = np.sum(diagonal_areas)
+
+    print(f"Vertical Beam Area (First Level): {vertical_area_total}")
+    print(f"Diagonal Beam Area (First Level): {diagonal_area_total}")
+
+    area=vertical_area_total+diagonal_area_total
     
-    # Convert to frequencies in Hz
-    angular_frequencies = np.sqrt(np.maximum(eigenvalues, 0))  # rad/s
-    frequencies = angular_frequencies / (2 * np.pi)  # Hz
+    f_axx=0.25*np.sqrt(area*E/(spacecraft_mass*l))
+    frequencies.append(f_axx)
+    structure_center = np.mean(truss.nodes, axis=0)
     
-    return frequencies, eigenvectors, free_dofs
+    #Calculate the center of the element
+    
+    
+    #for i in range(len(truss.Avert)):
+        #element_center = np.mean(truss.elements, axis=0)
+        #d=np.linalg.norm(np.array(element_center) - np.array(structure_center))
+        #iss=truss.Avert[i]*d**2
+        #iis.append(iss)
+    #print('no nodes ',len(truss.Avert))
+    iis=[]
+    for i in range (len(vertical_areas)):
+        element_center = np.mean(vertical_elements[i], axis=0)
+        d=np.linalg.norm(np.array(element_center) - np.array(structure_center))
+        iis.append(vertical_areas[i]*d**2)
+    for i in range (len(diagonal_areas)):
+        element_center = np.mean(diagonal_elements[i], axis=0)
+        d=np.linalg.norm(np.array(element_center) - np.array(structure_center))
+        iis.append(diagonal_areas[i]*d**2)
+        
+    I=np.sum(iis)
+    f_latt=0.56*np.sqrt(I*E/(spacecraft_mass*l**3))
+    frequencies.append(f_latt)
+    return frequencies
 
 
 
@@ -713,19 +803,4 @@ def solve_eigenvalue_problem2(truss, E, spacecraft_mass, lumped_mass=False):
     eigenvalues, eigenvectors = eigh(K_reduced, M_reduced)
     return eigenvalues, eigenvectors, free_dofs
 
-def calculate_natural_frequencies2(truss, E,spacecraft_mass ,lumped_mass=False ):
-    """
-    Calculates the natural frequencies of the truss.
 
-    Args:
-        E: Young's modulus.
-        lumped_mass: If True, use a lumped mass matrix. If False, use a consistent mass matrix.
-        spacecraft_mass: The mass of the spacecraft.
-
-    Returns:
-        A list of natural frequencies in Hz.
-    """
-    eigenvalues, eigenvectors, free_dofs = solve_eigenvalue_problem2(truss,E, spacecraft_mass)
-    angular_frequencies = np.sqrt(np.maximum(eigenvalues, 0))  # Ensure non-negative
-    frequencies = angular_frequencies / (2 * np.pi)
-    return frequencies

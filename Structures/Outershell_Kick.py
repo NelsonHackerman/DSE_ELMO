@@ -41,11 +41,13 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     b=np.pi*d/n #distance between stringers
     ts=0.001 #thickness of 1 stringer
     ls=0.03 # total length of 1 stringer
-    A2=np.pi*d*t+ls*ts
+    A2=np.pi*d*t+ls*ts*n
     if l_eq_com*m/A2>Sig_c:
         print(f"{RED}Compression{RESET}")
+        print(l_eq_com*m/A2/Sig_c)
     else:
         print(f"{GREEN}No compression{RESET}")
+        print(l_eq_com*m/A2/Sig_c)
     val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
     k=input(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}: k=')
     k=float(k)
@@ -85,9 +87,10 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     print('Percentage difference assumptions',(realA-A)/A*100)
     print('Check assumptions',r/t,l/r)
     print('Assumption ratio',buckratio)
+    print('End of calc')
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,100,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,176,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,104,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,208,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
 print(f"{PURPLE}Total LOAD BEARING mass: {total_struc_mass} kg{RESET}")
@@ -98,7 +101,8 @@ print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")
 print(f"{PURPLE}Total outer volume: {total_struc_vol} m^3{RESET}")
 print(m_u_stage)
 print(m_l_stage)
-m_u_stage=1/0.6347*m_u_stage-m_u_stage
-m_l_stage=1/0.6347*m_l_stage-m_l_stage
+m_u_stage=1/0.6347*m_u_stage
+m_l_stage=1/0.6347*m_l_stage
 print ('upper stage mass ', m_u_stage)
 print('lower stage mass ',m_l_stage)
+
