@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.linalg import eigh
 from numpy.linalg import solve
-from Truss_force_and_stiffness import apply_force, apply_boundary_conditions, calculate_stiffness_matrix, calculate_element_forces, visualize_truss, check_stress, calculate_mass, calculate_mass_matrix, solve_eigenvalue_problem, calculate_natural_frequencies, visualize_mode_shape,calculate_mass_matrix_calfem,calculate_stiffness_matrix_calfem,solve_eigenvalue_problem2,apply_boundary_conditions2,expand_displacement_vector
+from Truss_force_and_stiffness import calculate_element_forces, visualize_truss, check_stress, calculate_mass, calculate_natural_frequencies
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
 from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
 
@@ -162,7 +162,7 @@ stress_check=check_stress(element_stresses,truss)
 visualize_truss(truss,stress_check,element_forces)
 mass=calculate_mass(truss)
 print('Mass: ',mass)
-M=calculate_mass_matrix(truss, morb)
+
 frequencies=calculate_natural_frequencies(truss, E, morb,lu)
 print('frequencies ',frequencies)
 totalmass=mass*1/0.6347
@@ -201,7 +201,7 @@ stress_check=check_stress(element_stresses,truss2)
 visualize_truss(truss2,stress_check,element_forces)
 mass=calculate_mass(truss2)
 print('Mass: ',mass)
-M=calculate_mass_matrix(truss2, mtot)
+
 frequencies=calculate_natural_frequencies(truss2, E, mtot,ll)
 print('frequencies ',frequencies)
 totalmass=mass*1/0.6347
