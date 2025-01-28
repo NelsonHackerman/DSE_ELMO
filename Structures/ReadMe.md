@@ -1,4 +1,7 @@
-Outershell.py will focus on the structural design of the outer shell of the spacecraft, given a closed non truss structure
-(I will add more files in the future when I start adding in integrated/non integrated fuel tanks and truss structure options)
-I am explaining what I do as I do it in the python files in comments.
-IMPORTANT: I will be using + for tension and - for compression
+All files have explanations in the comments. 
+Constants contains the launch loads, wet masses and the material properties
+Outershell_no_stringers is a basic shell
+Outershell_with_stringers is a shell with stringers
+Outershell_Kick is an outershell kickstage with stringers. You can replace outershell_with_stringers by using half of the code here.
+Truss_force_and_stiffness contains the functions to be used in Truss_structure
+Truss_structure contains the code for a truss for a kickstage. you can change the shape and complexity

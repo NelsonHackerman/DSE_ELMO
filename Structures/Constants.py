@@ -13,7 +13,7 @@
 #Sig_c=1470*10**6#N/m2 compressive strength
 #Sig_ty=1820*10**6#N/m2 yield tensile strength
 
-#msx
+#msx material
 E=9.28*10**10#N/m2
 v=0.33
 rho=1.636*10**3#kg/m3 correct is 1661
@@ -51,6 +51,7 @@ f_ax=20 #axial natural frequency requirement
 f_lat=6 #longitudinal natural frequency requirement
 
 option='c'
+#all the options below were from the midterm, after the midterm the concept was frozen as option C (PV+ kick)
 if option=='a':
     morb=4364
     mtot=10761
@@ -75,8 +76,8 @@ if option=='b':
     l_eq_ten=l_ax_ten+2*m_bend/r #axial tension load with bending
     l_eq_com=l_ax_com+2*m_bend/r
 if option=='c':
-    morb=4308.30
-    mtot=6307.75+morb
+    morb=4870.77
+    mtot=8503.98+morb
     ru=1.503/2
     rl=1.944/2
     du=2*ru
@@ -89,6 +90,12 @@ if option=='c':
     m_bend_l=(lu+ll)/2*l_lat#axial bending moment from lateral loads
     l_eq_ten_l=l_ax_ten+2*m_bend_l/rl #axial tension load with bending
     l_eq_com_l=l_ax_com+2*m_bend_l/rl
+    print(l_eq_com_u*morb)
+    print(l_eq_com_l*mtot)
+    print(l_eq_ten_u*morb)
+    print(l_eq_ten_l*mtot)
+    print(m_bend_u*morb)
+    print(m_bend_l*mtot)
 if option=='d':
     m=31047 
     r=1.04

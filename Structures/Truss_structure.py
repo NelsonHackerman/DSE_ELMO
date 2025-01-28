@@ -1,8 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-from scipy.linalg import eigh
-from numpy.linalg import solve
 from Truss_force_and_stiffness import calculate_element_forces, visualize_truss, check_stress, calculate_mass, calculate_natural_frequencies
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
 from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
@@ -14,6 +11,20 @@ class TrussStructure:
     def __init__(self):
         pass
     def DefineGeometry(self, baseShape, radius, height, rings,vt,vr,ht1,hr1,ht2,hr2,dt,dr):
+        '''
+        Baseshape: no. of sides, a square is 4
+        Radius: radius of the outer spacecraft
+        height: height of the outer spacecraft
+        rings: no. of intermediate rings in the truss.
+        vt: vertical beam thickness
+        vr: vertical beam radius
+        ht1: first level horizontal beam thickness
+        hr1: first level horizontal beam radius
+        ht2: all other horizontal beam thicknesses
+        hr2: all other horizontal beam radii
+        dt: diagonal beam thickness
+        dr: diagonal beam radius
+        '''
         self.columns = []
         ringPitch = height / (rings+1)
 
@@ -137,9 +148,10 @@ class TrussStructure:
         self.node_index = {tuple(node): i for i, node in enumerate(self.nodes)}
 
 
+#initiates truss for upper stage
 truss = TrussStructure()
-truss.DefineGeometry(4, ru, lu, 0,0.002,0.04,0.001,0.01,0.001,0.03,0.001,0.04)
-
+truss.DefineGeometry(4, ru, lu, 0,0.003,0.04,0.000,0.00,0.001,0.03,0.002,0.04)
+print(truss.length)
 
 for element in truss.elements:
     x = [element[0][0], element[1][0]]
@@ -149,13 +161,13 @@ for element in truss.elements:
 
 # --- External Force ---
 
-force_vector = [0, 0, -l_eq_com_u*morb] #-2812*9.81*(7.1+5.1*2.5)] 
-force_vector2=[0, 0, -l_eq_ten_u*morb]
+force_vector = [0, 0, -l_eq_com_u*morb] #-2812*9.81*(7.1+5.1*2.5)] used for MSX validation
+
 print('force vector: ',force_vector)
 # --- Calculate Element Forces ---
 element_forces, element_stresses = calculate_element_forces(truss,force_vector)
 for i, force in enumerate(element_forces):
-    print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
+    print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} , stress: {element_stresses[i]:.2f} Pa")
 stress_check=check_stress(element_stresses,truss)
 
 # --- Visualize the Truss ---
@@ -165,19 +177,14 @@ print('Mass: ',mass)
 
 frequencies=calculate_natural_frequencies(truss, E, morb,lu)
 print('frequencies ',frequencies)
-totalmass=mass*1/0.6347
+totalmass=mass*1/0.6347 #statistical estimation for secondary structure, explained further in report
 print('total mass: ',totalmass)
-#element_forces, element_stresses = calculate_element_forces(truss,force_vector2)
-#for i, force in enumerate(element_forces):
-    #print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
-#stress_check=check_stress(element_stresses,truss)
 
 
 
 
 
-
-
+#for the lower stage
 truss2 = TrussStructure()
 truss2.DefineGeometry(8, rl, ll, 1,0.003,0.03,0.001,0.03,0.001,0.03,0.002,0.03)
 
@@ -194,7 +201,7 @@ print('force vector: ',force_vector)
 # --- Calculate Element Forces ---
 element_forces, element_stresses = calculate_element_forces(truss2,force_vector)
 for i, force in enumerate(element_forces):
-    print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} ")
+    print(f"Element {i+1} force: {force:.2f} N, stress factor : {element_stresses[i]/Sig_ty*SF:.2f} Pa")
 stress_check=check_stress(element_stresses,truss2)
 
 # --- Visualize the Truss ---
@@ -204,6 +211,6 @@ print('Mass: ',mass)
 
 frequencies=calculate_natural_frequencies(truss2, E, mtot,ll)
 print('frequencies ',frequencies)
-totalmass=mass*1/0.6347
+totalmass=mass*1/0.6347 #statistical estimation for secondary structure, explained further in report
 print('total mass: ',totalmass)
 

@@ -1,23 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-import calfem.core as cfc
-import calfem.utils as cfu
-import calfem.vis_mpl as cfv
-from scipy.linalg import eigh
-from numpy.linalg import solve
-#from Structures.Truss_structure import TrussStructure
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
-from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
+from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
 
 
 def calculate_element_forces(truss, external_force):
     """
-    Calculate forces in truss elements using static equilibrium method
+    Calculates forces in truss elements using static equilibrium method
     
     Parameters:
     truss: TrussStructure object containing geometry and properties
-    external_force: [Fx, Fy, Fz] external force vector applied to each top node
+    external_force: [Fx, Fy, Fz] external force vector applied to structure
     
     Returns:
     element_forces: Array of axial forces in each element
@@ -25,9 +18,10 @@ def calculate_element_forces(truss, external_force):
     """
     n_nodes = len(truss.nodes)
     n_elements = len(truss.elements)
+    #dividing the external foce over the top nodes
     for i in range(len(external_force)):
         external_force[i]=external_force[i]/len(truss.baseNodes)
-    
+        
     
     # Create coefficient matrix A and force vector b for Ax = b
     # Each row represents equilibrium equation (3 per node: Fx, Fy, Fz)
@@ -83,6 +77,15 @@ def calculate_element_forces(truss, external_force):
 
 
 def calculate_mass(truss):
+    """
+    Calculates the mass of the entire truss.
+
+    Args:
+        truss: Truss object
+
+    Returns:
+        A float of the mass of the truss in kg
+    """
     truss.mass=[]
     for i in range (len(truss.elements)):
         elem_mass = truss.length[i]*truss.A[i]*rho
@@ -98,7 +101,7 @@ def check_stress(element_stresses,truss):
 
     Args:
         element_stresses: A list of element stresses.
-        allowable_stress: The allowable stress for the material.
+        truss: Truss object
 
     Returns:
         A list of booleans, where True indicates that the stress in the
@@ -122,7 +125,7 @@ def check_stress(element_stresses,truss):
     #print(stress_exceeded)
     return stress_exceeded
 
-def visualize_truss(truss, stress_check, element_forces=None):
+def visualize_truss(truss, stress_check, element_forces):
     """
     Visualizes the truss structure with stress indicators and element labels.
     
@@ -205,21 +208,25 @@ def visualize_truss(truss, stress_check, element_forces=None):
 def calculate_natural_frequencies(truss, E, spacecraft_mass,l):
 
     """
-    Retrieves cross-sectional areas of horizontal elements at a given level.
+    Determines cross-sectional areas and mass moments of inertia of vertical elements at a given level and
+    calculates the natural axial and lateral frequencies.
 
     Args:
         truss: A TrussStructure object.
-        level: The level (ring index, starting from 0) to query.
+        E: Young's modulus of material
+        spacecraft_mass: mass of the spacecraft
+        l: length of the spacecraft
 
     Returns:
-        A list of cross-sectional areas (floats) for horizontal elements at that level.
+        A list containing two natural frequencies: axial and lateral respectively
+        
+    NOTE:there is a mistake here with the calculations for the diagonal areas and MOIs, as they seem to always be
+    zero. I didn't fix this as the vertical beams alone met the frequency requirements for the Ariane 64.
     """
-    areas = []
+    
     frequencies=[]
-    rs=[]
     num_columns = len(truss.columns)
-    num_nodes_per_level = len(truss.columns[0])
-
+    
     # Initialize areas and radii for vertical and diagonal beams
     vertical_areas = []
     vertical_radii = []
@@ -266,20 +273,12 @@ def calculate_natural_frequencies(truss, E, spacecraft_mass,l):
     print(f"Diagonal Beam Area (First Level): {diagonal_area_total}")
 
     area=vertical_area_total+diagonal_area_total
-    
+    #equation for axial natural frequency from SMAD
     f_axx=0.25*np.sqrt(area*E/(spacecraft_mass*l))
     frequencies.append(f_axx)
     structure_center = np.mean(truss.nodes, axis=0)
     
-    #Calculate the center of the element
-    
-    
-    #for i in range(len(truss.Avert)):
-        #element_center = np.mean(truss.elements, axis=0)
-        #d=np.linalg.norm(np.array(element_center) - np.array(structure_center))
-        #iss=truss.Avert[i]*d**2
-        #iis.append(iss)
-    #print('no nodes ',len(truss.Avert))
+    #Calculate the center of the element and the parallel axis MOI
     iis=[]
     for i in range (len(vertical_areas)):
         element_center = np.mean(vertical_elements[i], axis=0)
@@ -291,6 +290,8 @@ def calculate_natural_frequencies(truss, E, spacecraft_mass,l):
         iis.append(diagonal_areas[i]*d**2)
         
     I=np.sum(iis)
+    print('I value: ',I)
+    #equation for lateral natural frequency from SMAD
     f_latt=0.56*np.sqrt(I*E/(spacecraft_mass*l**3))
     frequencies.append(f_latt)
     return frequencies

@@ -1,14 +1,13 @@
 import numpy as np
-
-from sympy import symbols, Eq, solve, nsolve
-import sympy
 global E,v,rho,Sig_tu,Sig_ty,g,SF,l_ax_com,l_ax_ten,l_lat,f_ax,f_lat,Sig_c
-from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,m_bend_u,m_bend_l,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
+from Constants import E,v,rho,Sig_tu,Sig_ty,g,SF,morb,mtot,l_ax_com,l_ax_ten,l_lat,l_eq_ten_u,l_eq_ten_l,l_eq_com_u,l_eq_com_l,f_ax,f_lat, ru,rl,lu,ll,dl,du,Sig_c
 
 GREEN = "\033[92m"
 RED = "\033[91m"
 PURPLE = "\033[95m"
 RESET = "\033[0m"
+
+
 #Kickstage option, I'm running the program twice, first for the top half with the orbiter, then for the actual kickstage.
 
 
@@ -42,13 +41,18 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     ts=0.001 #thickness of 1 stringer
     ls=0.03 # total length of 1 stringer
     A2=np.pi*d*t+ls*ts*n
+    ten_str=l_eq_ten*m/A2
+    com_str=l_eq_com*m/A2
+    print('tensile stress ',ten_str)
+    print('comp stress ',com_str)
+    
     if l_eq_com*m/A2>Sig_c:
         print(f"{RED}Compression{RESET}")
         print(l_eq_com*m/A2/Sig_c)
     else:
         print(f"{GREEN}No compression{RESET}")
         print(l_eq_com*m/A2/Sig_c)
-    val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD
+    val1=b**2/r/t*np.sqrt(1-v**2) #A value to read off k from the graph in SMAD, almost always 4 for me because I have so many stringers
     k=input(f'Read off graph, r/t: {GREEN}{r/t}{RESET}, x axis: {GREEN}{val1}{RESET}: k=')
     k=float(k)
     Mod_buck=k*np.pi**2*E/(12*(1-v**2))*(t/b)**2
@@ -84,13 +88,13 @@ def Shell(m,l,d,t,n,l_eq_ten,l_eq_com,r):
     print('Axial natural frequency: ',f_ax_mod,'Hz')
     print('Lateral natural frequency: ',f_lat_mod,'Hz')
     print('Total volume',v_struc,'m3')
-    print('Percentage difference assumptions',(realA-A)/A*100)
+    print('Percentage difference assumptions',(realA-A)/A*100) #percentage difference in cross sectional area for asumming thin wall
     print('Check assumptions',r/t,l/r)
     print('Assumption ratio',buckratio)
     print('End of calc')
     return struc_m,v_struc
-m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,104,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
-m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,208,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
+m_u_stage,v_u_stage=Shell(morb,lu,du,0.001,76,l_eq_ten_u,l_eq_com_u,ru) #for orbiter stage
+m_l_stage,v_l_stage=Shell(mtot,ll,dl,0.001,236,l_eq_ten_l,l_eq_com_l,rl) #for the lower stage
 total_struc_mass=m_u_stage+m_l_stage
 total_struc_vol=v_u_stage+v_l_stage
 print(f"{PURPLE}Total LOAD BEARING mass: {total_struc_mass} kg{RESET}")
@@ -99,10 +103,10 @@ total_struc_mass=1/0.6347*total_struc_mass #1.1 for fasteners
 
 print(f"{PURPLE}Total structure mass: {total_struc_mass} kg{RESET}")
 print(f"{PURPLE}Total outer volume: {total_struc_vol} m^3{RESET}")
-print(m_u_stage)
-print(m_l_stage)
+print('Load bearing upper stage mass: ',m_u_stage)
+print('Load bearing lower stage mass: ',m_l_stage)
 m_u_stage=1/0.6347*m_u_stage
 m_l_stage=1/0.6347*m_l_stage
-print ('upper stage mass ', m_u_stage)
-print('lower stage mass ',m_l_stage)
+print ('Total upper stage mass: ', m_u_stage)
+print('Total lower stage mass: ',m_l_stage)
 
